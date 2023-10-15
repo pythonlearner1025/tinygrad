@@ -9,6 +9,10 @@ from tinygrad.nn.optim import Adam
 from extra.optimization.pretrain_policynet import PolicyNet
 from extra.optimization.helpers import load_worlds, ast_str_to_lin, lin_to_feats
 
+def avg(bucket):
+  a = [v if v else 0 for k,v in bucket.items()]
+  return sum(a)/len(bucket) if len(bucket)!=0 else 0, max(a), min(a)
+
 if __name__ == "__main__":
   DIR = getenv("DIR","") if getenv("DIR","") else "tmp"
   net = PolicyNet()
@@ -19,12 +23,19 @@ if __name__ == "__main__":
 
   # select a world
   all_feats, all_acts, all_rews = [], [], []
+  bucket=dict()
+  steps = 0
   while 1:
     Tensor.no_grad, Tensor.training = True, False
     lin = ast_str_to_lin(random.choice(ast_strs))
     rawbufs = bufs_from_lin(lin)
     tm = last_tm = base_tm = time_linearizer(lin, rawbufs)
 
+    bucket[lin] = bucket.get(lin,0)+1
+    if steps % 10 == 0:
+      a,ma,mi = avg(bucket)
+      print(f'bucket hit stats: avg {a} max {ma} mi {mi}')
+      if a >= 5: break
     # take actions
     feats, acts, rews = [], [], []
     while 1:
@@ -56,7 +67,8 @@ if __name__ == "__main__":
 
     assert len(feats) == len(acts) and len(acts) == len(rews)
     #print(rews)
-    print(f"***** EPISODE {len(rews)} steps, {sum(rews):5.2f} reward, {base_tm*1e6:12.2f} -> {tm*1e6:12.2f} : {lin.colored_shape()}")
+    print(f"***** EPISODE {steps}: {len(rews)} steps, {sum(rews):5.2f} reward, {base_tm*1e6:12.2f} -> {tm*1e6:12.2f} : {lin.colored_shape()}")
+    steps+=1
     all_feats += feats
     all_acts += acts
     # rewards to go
