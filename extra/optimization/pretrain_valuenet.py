@@ -9,7 +9,7 @@ from tinygrad.nn.state import get_parameters, get_state_dict, safe_save, safe_lo
 
 # stuff needed to unpack a kernel
 from tinygrad.ops import LazyOp, TernaryOps, BinaryOps, UnaryOps, ReduceOps, BufferOps, MemBuffer, ConstBuffer
-from tinygrad.helpers import dtypes
+from tinygrad.helpers import dtypes, getenv
 from tinygrad.shape.shapetracker import ShapeTracker
 from tinygrad.shape.view import View
 from tinygrad.shape.symbolic import Variable
@@ -33,12 +33,13 @@ class ValueNet:
     return self.l4(x)
 
 if __name__ == "__main__":
+  DIR = getenv("DIR","") if getenv("DIR","") else "tmp"
   net = ValueNet()
   optim = Adam(get_parameters(net))
 
   TEST_SIZE = 256
 
-  dset = open("/tmp/logtm").read().strip().split("\n")
+  dset = open(f"/{DIR}/logtm").read().strip().split("\n")
   random.seed(1337)
   random.shuffle(dset)
 
@@ -80,7 +81,7 @@ if __name__ == "__main__":
     test_losses.append(test_loss)
     if i % 10: test_loss = (net(X_test)-Y_test).square().mean().numpy().item()
 
-  safe_save(get_state_dict(net), "/tmp/valuenet.safetensors")
+  safe_save(get_state_dict(net), f"/{DIR}/valuenet.safetensors")
 
   import matplotlib.pyplot as plt
   plt.plot(losses[200:])

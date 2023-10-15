@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import math, random
+from tinygrad.helpers import getenv
 from tinygrad.tensor import Tensor
 from tinygrad.nn.state import get_parameters, get_state_dict, safe_save, safe_load, load_state_dict
 from tinygrad.codegen.search import actions, bufs_from_lin, time_linearizer, get_linearizer_actions
@@ -9,8 +10,9 @@ from extra.optimization.pretrain_policynet import PolicyNet
 from extra.optimization.helpers import load_worlds, ast_str_to_lin, lin_to_feats
 
 if __name__ == "__main__":
+  DIR = getenv("DIR","") if getenv("DIR","") else "tmp"
   net = PolicyNet()
-  if os.path.isfile("/tmp/policynet.safetensors"): load_state_dict(net, safe_load("/tmp/policynet.safetensors"))
+  if os.path.isfile(f"/{DIR}/policynet.safetensors"): load_state_dict(net, safe_load(f"/{DIR}/policynet.safetensors"))
   optim = Adam(get_parameters(net))
 
   ast_strs = load_worlds()

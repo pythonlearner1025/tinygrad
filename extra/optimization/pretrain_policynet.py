@@ -2,6 +2,7 @@ import os
 from copy import deepcopy
 from tinygrad.nn import Linear
 from tinygrad.tensor import Tensor
+from tinygrad.helpers import getenv
 from tinygrad.nn.optim import Adam
 from tinygrad.nn.state import get_parameters, get_state_dict, safe_save, safe_load, load_state_dict
 from tinygrad.codegen.search import actions
@@ -19,10 +20,11 @@ class PolicyNet:
     return self.l3(x).log_softmax()
 
 if __name__ == "__main__":
+  DIR = getenv("DIR","") if getenv("DIR","") else "tmp"
   ast_strs = load_worlds(False, False, filter_novariable=True)
 
   net = PolicyNet()
-  if os.path.isfile("/tmp/policynet.safetensors"): load_state_dict(net, safe_load("/tmp/policynet.safetensors"))
+  if os.path.isfile(f"/{DIR}/policynet.safetensors"): load_state_dict(net, safe_load(f"/{DIR}/policynet.safetensors"))
   optim = Adam(get_parameters(net))
 
   X,Y = [], []
@@ -60,6 +62,6 @@ if __name__ == "__main__":
       Y = Y[BS:]
 
       if steps%10 == 0:
-        safe_save(get_state_dict(net), "/tmp/policynet.safetensors")
+        safe_save(get_state_dict(net), f"/{DIR}/policynet.safetensors")
         print("saved model")
       steps += 1
