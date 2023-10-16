@@ -14,12 +14,13 @@ from extra.optimization.pretrain_valuenet import ValueNet
 VALUE = getenv("VALUE")
 
 if __name__ == "__main__":
+  DIR = getenv("DIR","") if getenv("DIR","") else "tmp"
   if VALUE:
     net = ValueNet()
-    load_state_dict(net, safe_load("/tmp/valuenet.safetensors"))
+    load_state_dict(net, safe_load(f"/{DIR}/valuenet.safetensors"))
   else:
     net = PolicyNet()
-    load_state_dict(net, safe_load("/tmp/policynet.safetensors"))
+    load_state_dict(net, safe_load(f"/{DIR}/policynet.safetensors"))
 
   ast_strs = load_worlds()
 
