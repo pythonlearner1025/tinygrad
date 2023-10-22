@@ -52,13 +52,13 @@ def not_strided_2d(x, sh, st, off):
     x = reshape(x, (x.size//st[0],st[0]))
     # pad cols
     o = st[1]-1
-    colstoadd = (st[1]*sh[1]-o)-st[0]
+    colstoadd = (st[1]*sh[1]-o)-st[0]+off
     if colstoadd > 0:
         padargs,kwargs = ((0,0),(0,colstoadd)), dict(mode=pad_col_staggered,A=x,i=1,colstoadd=colstoadd,axis=1)
         x = pad(x,padargs,**kwargs)
-        assert(st[1]*sh[1]-o) == len(x[0])
+        assert(st[1]*sh[1]-o)+off == len(x[0])
     # shrink
-    x = shrink(x, ((0,sh[0]), (0,st[1]*sh[1]-o)))
+    x = shrink(x, ((0,sh[0]), (off,st[1]*sh[1]-o+off)))
     # stride
     x = stride(x, (1,st[1]))
     return x
@@ -107,13 +107,13 @@ def construct_tests(n):
         tests.append((x,sh,st,off))
     return tests 
 
-def run_tests(tests, no_offset=True):
+def run_tests(tests, offset=True):
     failed, faulty_tests = [], []
     t = 0
     for i,test in enumerate(tests):
         print(f'** TEST {i} **')
         x,sh,st_,o = test
-        off = 0 if no_offset else o
+        off = 0 if offset else o
         for i in st_[0]:
             for j in st_[1]:
                 st = (i,j)
@@ -137,6 +137,7 @@ def run_tests(tests, no_offset=True):
                     print(a)
                     print(b)
                     failed.append((x,sh,st,off,a,b))
+                    t+=1
                     continue
                 print(f'** passing st {st} sh {sh} off {off} **')
                 t+=1
@@ -159,4 +160,4 @@ def run_tests(tests, no_offset=True):
     print(f'** {len(failed)} FAILED {t-len(failed)} PASSED {100*len(failed)/t:.2f}% FAIL RATE')
 if __name__ == '__main__':
     tests = construct_tests(100)
-    run_tests(tests)
+    run_tests(tests, offset=False)
