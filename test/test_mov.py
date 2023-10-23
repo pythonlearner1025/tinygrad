@@ -74,6 +74,8 @@ def multipad(vector,pad_width,iaxis,kwargs):
             toadd.extend(zeros)
             break
         # index into one dim up, collect all that you can up till padding         # hack: automate this
+                # there should be axis-1 extra vars,
+                # (slice(kwargs[f'var{i}'],kwargs[f'var{i}]+1),) for i in range(axis-1)
         collected = A[(slice(j,j+1),)*(axis-1)+(slice(i,i+1),)+(slice(padding-len(toadd)),)]
         ones = tuple(np.where(np.array(collected.shape)==1)[0])
         if max(collected.shape) == 1:
@@ -86,15 +88,24 @@ def multipad(vector,pad_width,iaxis,kwargs):
     #print(vector[-pad_after:])
     #print(toadd)
     vector[-pad_after:] = toadd
-    
+
+    # TODO is this correct?
+                        # 2, 1
+    reset = False
+    for ax in range(len(A.shape)-1,0,-1):
+        if kwargs[f'i{ax}'] % A.shape[ax-1] == 0:
+            for tax in range(ax,len(A.shape)-1):
+                kwargs[f'i{tax}']=1
+            kwargs[f'i{ax-1}']+=1
+            reset = True
+    if not reset:
+        kwargs[f'i{len(A.shape)-1}'] +=1
     # reset
     if kwargs['i'] % A.shape[axis-1] == 0:
         kwargs['j']+=1
         kwargs['i']=1
     else:
         kwargs['i'] += 1
-
-
 
 def not_strided(x, sh, st, off):
     logging.info(f'** not_strided **')
@@ -154,7 +165,7 @@ def not_strided(x, sh, st, off):
     return x
 
 # Setting logging level to INFO for demonstration purposes
-logging.getLogger().setLevel(logging.WARNING)
+logging.getLogger().setLevel(logging.INFO)
 
 def size(x):
     if isinstance(x, np.ndarray): return x.size
