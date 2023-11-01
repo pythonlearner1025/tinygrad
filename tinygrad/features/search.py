@@ -38,7 +38,7 @@ def time_linearizer(lin:Linearizer, rawbufs:List[RawBuffer], allow_test_size=Tru
             break
       factor = prod(prg.global_size) / prod(test_global_size)
       prg.global_size = test_global_size
-      print(real_global_size, test_global_size, factor)
+      #print(real_global_size, test_global_size, factor)
     else:
       factor = 1
     # TODO: this is super broken for var_vals
