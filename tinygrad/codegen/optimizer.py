@@ -128,12 +128,13 @@ class OptimizedKernel(Kernel):
     # Check the global allocation limit, current the global_size will be flipped during codegen
     # and then padded right with 1s if its length < 3 which makes this part a bit awkward to write
     global_dims = self.first_reduce-self.local_dims
-    print(len(global_max), global_dims-1)
+    #print(len(global_max), global_dims-1)
     if global_dims > 0:
       if global_max:
         tmp = global_max[:global_dims] + (local_max[:self.local_dims] if local_max else [])
         if max(global_max) < max(self.full_shape[:global_dims]): self.reshape_and_permute(lambda x: self._limit_size(x, tmp + [math.inf] * (len(self.full_shape)-len(tmp))), None)
         assert max(global_max) >= max(self.full_shape[:global_dims]), f"device max allocation {max(self.full_shape[:global_dims])} exceeds global dim maximum {max(global_max)}"
+      # this ok? 
       if len(global_max) < global_dims:
         global_dims-=1
       for i in range(global_dims-1):
