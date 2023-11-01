@@ -38,7 +38,7 @@ def time_linearizer(lin:Linearizer, rawbufs:List[RawBuffer], allow_test_size=Tru
             break
       factor = prod(prg.global_size) / prod(test_global_size)
       prg.global_size = test_global_size
-      #print(real_global_size, test_global_size, factor)
+      print(real_global_size, test_global_size, factor)
     else:
       factor = 1
     # TODO: this is super broken for var_vals
@@ -54,11 +54,12 @@ def time_linearizer(lin:Linearizer, rawbufs:List[RawBuffer], allow_test_size=Tru
         with Context(DEBUG=0): Tensor.rand(1024,1024).realize()
       tms.append(prg.clprg(global_size, local_size, *rawbufs, *var_vals.values(), wait=True)*factor)
     prg.global_size = real_global_size
-  except Exception:
+  except Exception as e:
     #import traceback; traceback.print_exc()
     #print("FAILED")
     #print(lin.ast)
     #print(lin.applied_opts)
+    print(f'FAILED: {e}')
     tms = [float('inf')]
   if CACHELEVEL >= 2: diskcache_put("time_linearizer", key, tms)
   return min(tms)
@@ -112,7 +113,10 @@ def beam_search(lin:Linearizer, rawbufs, amt:int, allow_test_size=True) -> Linea
     # dedup with uops (TODO: double linearize not needed)
     acted_lins_dedup = []
     for lin in acted_lins:
-      tuops = tuplize_uops(lin.copy().linearize().uops)
+      try:
+        tuops = tuplize_uops(lin.copy().linearize().uops)
+      except:
+        continue
       if tuops in seen_uops:
         #print(seen_uops[tuops], lin.applied_opts)
         continue

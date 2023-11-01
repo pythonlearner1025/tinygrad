@@ -135,8 +135,8 @@ class OptimizedKernel(Kernel):
         if max(global_max) < max(self.full_shape[:global_dims]): self.reshape_and_permute(lambda x: self._limit_size(x, tmp + [math.inf] * (len(self.full_shape)-len(tmp))), None)
         assert max(global_max) >= max(self.full_shape[:global_dims]), f"device max allocation {max(self.full_shape[:global_dims])} exceeds global dim maximum {max(global_max)}"
       # this ok? 
-      if len(global_max) < global_dims:
-        global_dims-=1
+  #    if len(global_max) < global_dims:
+  #      global_dims-=1
       for i in range(global_dims-1):
         if self.full_shape[i] > global_max[i]:
           order = list(range(len(self.full_shape)))
