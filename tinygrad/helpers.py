@@ -166,7 +166,7 @@ def cache_compiled(func):
 
 # *** universal database cache ***
 
-CACHEDB = getenv("CACHEDB", "/tmp/tinygrad_cache")
+CACHEDB = getenv("CACHEDB", "/content/tinygrad_cache")
 CACHELEVEL = getenv("CACHELEVEL", 2)
 
 VERSION = 4
