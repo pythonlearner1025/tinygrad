@@ -175,7 +175,7 @@ class TestSchedule(unittest.TestCase):
     c1 = nn.Conv2d(3,16,3)
 
     # run
-    img = Tensor.ones(2,3,64,64)
+    img = Tensor.rand(2,3,64,64)
     out = c1(img).elu()
     check_schedule(out, 1, [c1.weight, c1.bias])
 
@@ -325,6 +325,11 @@ class TestSchedule(unittest.TestCase):
     x = Tensor([1,2,3,4])
     out = x.to('cpu')
     check_schedule(out, 0, filter_loadops=False)
+
+  def test_pow_const_tensor(self):
+    x = Tensor([1,2,3,4])
+    out = x ** Tensor(2)
+    check_schedule(out, 1)
 
 if __name__ == '__main__':
   unittest.main(verbosity=2)

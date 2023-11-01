@@ -3,14 +3,11 @@ from models.resnet import ResNet50
 from tinygrad.tensor import Tensor
 from tinygrad.ops import LoadOps, Device, Compiled
 from tinygrad.codegen.linearizer import Linearizer
-from tinygrad.codegen.search import bufs_from_lin, time_linearizer, get_linearizer_actions
-from tinygrad.helpers import ansilen, DEBUG, getenv, flatten
-from tinygrad.graph import print_tree
+from tinygrad.features.search import time_linearizer, beam_search
+from tinygrad.helpers import ansilen, DEBUG, getenv
 from tinygrad.lazy import vars_from_ast
 from tinygrad.shape.symbolic import sym_infer
 
-import shelve
-global_db = shelve.open("/tmp/greedy_cache")
 
 if __name__ == "__main__":
   mdl = ResNet50()
@@ -36,8 +33,6 @@ if __name__ == "__main__":
   total_tm = 0
   running_gflops = 0
   for i,si in enumerate(sched):
-    if DEBUG >= 2: print_tree(si.ast)
-
     # create output/input buffers (NOTE: bufs_from_lin is slower, so we don't use it. TODO: fix)
     rawbufs = [device.buffer(si.out.st.size(), si.out.dtype)] + [device.buffer(x.st.size(), x.dtype) for x in si.inputs]
     #rawbufs = bufs_from_lin(lin)
@@ -58,22 +53,7 @@ if __name__ == "__main__":
     # try a beam search
     if getenv("BEAM"):
       lin = Linearizer(si.ast, device.linearizer_opts)
-      if str(lin.ast) in global_db:
-        for ao in global_db[str(lin.ast)]:
-          lin.apply_opt(ao)
-      else:
-        best_tm = float('inf')
-        beam = [lin]
-        while 1:
-          acted_lins = flatten([get_linearizer_actions(lin).items() for lin in beam])
-          timed_lins = [(v,time_linearizer(v, rawbufs)) for k,v in acted_lins if k != 0]
-          opts = sorted(timed_lins, key=lambda x: x[1])
-          if len(opts) == 0 or best_tm <= opts[0][1]: break  # we didn't get faster
-          best_tm = opts[0][1]
-          beam = [x[0] for x in opts[:getenv("BEAM")]]
-          if DEBUG >= 1: print(f"{opts[0][1]*1e3:10.2f} ms from {len(opts):3d} actions", beam[0].colored_shape())
-        lin = beam[0]
-        global_db[str(lin.ast)] = lin.applied_opts
+      lin = beam_search(lin, rawbufs, getenv("BEAM"), bool(getenv("BEAM_ESTIMATE", 1)))
       lins.append(lin)
 
     # benchmark the programs

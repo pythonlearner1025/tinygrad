@@ -1,13 +1,13 @@
 from tqdm import tqdm
 from extra.optimization.helpers import load_worlds, ast_str_to_lin
-from tinygrad.codegen.search import actions
+from tinygrad.features.search import actions
 from tinygrad.codegen.linearizer import Linearizer
 
 tactions = set()
 def test_rebuild(lin):
   linr = Linearizer(lin.ast)
   for o in lin.applied_opts:
-    assert o in actions
+    assert o in actions, f"{o} is not in actions"
     tactions.add(o)
     linr.apply_opt(o)
 
